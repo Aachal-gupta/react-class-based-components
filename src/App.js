@@ -1,14 +1,20 @@
-// import logo from './logo.svg';
 import './App.css';
 
-import React, { Component } from 'react'
+import React, { Component } from 'react';
+import Navbar from './Components/Navbar';
+import News from './Components/News';
+import NewsItems from './Components/NewsItems';
+
+
 
 export default class App extends Component {
-   c="ghy";
+  
   render() {
     return (
       <div>
-        hello this is {this.c}
+        <Navbar/>
+        <News/>
+        {/* <NewsItems/> */}
       </div>
     )
   }

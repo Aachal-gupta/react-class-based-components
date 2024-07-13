@@ -1,91 +1,142 @@
-import React, { Component } from 'react'
-import NewsItems from './NewsItems'
-import Spinner from './Spinner'
+import React, { Component } from "react";
+import NewsItems from "./NewsItems";
+import Spinner from "./Spinner";
+import PropTypes from "prop-types";
+
 export class News extends Component {
+  static defaultProps = {
+    country: "in",
+    pageSize: 8,
+    category: "general",
+  };
 
+  static propTypes = {
+    country: PropTypes.string,
+    pageSize: PropTypes.number,
+    category: PropTypes.string,
+  };
 
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
-      articales: [], // Initialize as an empty array
-      loading: false,
-      page : 1
+      articles: [], // Initialize articles as an empty array
+      loading: true,
+      page: 1,
+      totalArticles: 0,
     };
   }
 
-
-  async componentDidMount(){
-    try{
-    let url = `https://newsapi.org/v2/top-headlines?country=in&apiKey=a01b2d09c25b45ff98e73dfb9b2669ad&page=1&pageSize=${this.props.pageSize}`;
-    let data=  await fetch(url);
-    let parsedData = await data.json();
-    this.setState({articales: parsedData.articles, totalArticales: parsedData.totalResults });              // in the given link articles is a array which contain all data 
-    }catch (error) {
-          console.error('Error fetching data:', error);
-        }
+  async componentDidMount() {
+    try {
+      let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=a01b2d09c25b45ff98e73dfb9b2669ad&page=1&pageSize=${this.props.pageSize}`;
+      this.setState({ loading: true });
+      let data = await fetch(url);
+      let parsedData = await data.json();
+      this.setState({
+        articles: parsedData.articles,
+        totalArticles: parsedData.totalResults,
+        loading: false,
+      }); // in the given link articles is a array which contain all data
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
   }
 
   handleNextClick = async () => {
-    console.log('Next page ');
+    console.log("Next page ");
 
-    if(this.state.page + 1 > Math.ceil(this.state.totalArticales/this.props.pageSize)){
-
-    }else{
-      let url = `https://newsapi.org/v2/top-headlines?country=in&apiKey=a01b2d09c25b45ff98e73dfb9b2669ad&page=${ this.state.page+1}&pageSize=${this.props.pageSize}`;
-      let data=  await fetch(url);
+    if (
+      this.state.page + 1 <=
+      Math.ceil(this.state.totalArticles / this.props.pageSize)
+    ) {
+      let url = `https://newsapi.org/v2/top-headlines?country=${
+        this.props.country
+      }&category=${
+        this.props.category
+      }&apiKey=a01b2d09c25b45ff98e73dfb9b2669ad&page=${
+        this.state.page + 1
+      }&pageSize=${this.props.pageSize}`;
+      this.setState({ loading: true });
+      let data = await fetch(url);
       let parsedData = await data.json();
       this.setState({
-      
-        page : this.state.page + 1,
-        articales: parsedData.articles
-      });               
-      
+        page: this.state.page + 1,
+        articles: parsedData.articles,
+        loading: false,
+      });
     }
-
-  }
+  };
 
   handlePrevClick = async () => {
-    console.log('previous page ');
-      let url = `https://newsapi.org/v2/top-headlines?country=in&apiKey=a01b2d09c25b45ff98e73dfb9b2669ad&page=${this.state.page-1}&pageSize=${this.props.pageSize}`;
-      let data=  await fetch(url);
+    if (this.state.page > 1) {
+      let url = `https://newsapi.org/v2/top-headlines?country=${
+        this.props.country
+      }&category=${
+        this.props.category
+      }&apiKey=a01b2d09c25b45ff98e73dfb9b2669ad&page=${
+        this.state.page - 1
+      }&pageSize=${this.props.pageSize}`;
+      this.setState({ loading: true });
+      let data = await fetch(url);
       let parsedData = await data.json();
       this.setState({
-
-        page : this.state.page - 1,
-        articales: parsedData.articles,
-        
-      });             
-      
-  }
+        page: this.state.page - 1,
+        articles: parsedData.articles,
+        loading: false,
+      });
+    }
+  };
 
   render() {
     return (
       <div className="container my-4">
-        <h1 className="text-center">NewsMonkey - Top Headlines</h1>
-        { this.state.Snake && <Spinner />}
+        <h1 className="text-center" style={{ margin: "35px" }}>
+          NewsMonkey - Top Headlines
+        </h1>
+        {this.state.loading && <Spinner />}{" "}
+        {/* if this.state.loading is true than only spinner is work otherwise not    */}
         <div className="row">
-          {this.state.articales.map((element) => (
-            <div className="col-md-4" key={element.url}>
-              <NewsItems
-                title={element.title ? element.title : ""}
-                 description={element.description ? element.description : ""}    // {/* ternery operator if element.description is not null then */}
-                imageUrl={element.urlToImage}
-                newsUrl={element.url}
-              />
-            </div>
-          ))}
+          {!this.state.loading &&
+            this.state.articles.map((element) => (
+              <div className="col-md-4" key={element.url}>
+                <NewsItems
+                  title={element.title ? element.title : ""}
+                  description={element.description ? element.description : ""} // {/* ternery operator if element.description is not null then */}
+                  imageUrl={element.urlToImage}
+                  newsUrl={element.url}
+                  author={element.author}
+                  date={element.publishedAt}
+                  source={element.source.name}
+                />
+              </div>
+            ))}
         </div>
-        <div  className="container  d-flex justify-content-between">
-        <button disabled={this.state.page<=1} type="button" className="btn btn-dark" onClick={this.handlePrevClick }>&larr; Previous</button>
-        <button  disabled={this.state.page + 1 > Math.ceil(this.state.totalArticales/this.props.pageSize)}  type="button" className="btn btn-dark" onClick={this.handleNextClick}>Next &rarr; </button> 
-
+        <div className="container  d-flex justify-content-between">
+          <button
+            disabled={this.state.page <= 1}
+            type="button"
+            className="btn btn-dark"
+            onClick={this.handlePrevClick}
+          >
+            &larr; Previous
+          </button>
+          <button
+            disabled={
+              this.state.page + 1 >
+              Math.ceil(this.state.totalArticles / this.props.pageSize)
+            }
+            type="button"
+            className="btn btn-dark"
+            onClick={this.handleNextClick}
+          >
+            Next &rarr;{" "}
+          </button>
         </div>
       </div>
     );
   }
-  
 }
 
-export default News
+export default News;
 
 // note => 1st constructor will execute then rander function and at last componentDidMount will execute
